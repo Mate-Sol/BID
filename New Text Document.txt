@@ -1,0 +1,106 @@
+## for code deployment
+sudo dnf remove podman
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf install docker-ce docker-ce-cli containerd.io
+sudo systemctl start docker
+sudo systemctl enable docker
+
+
+#sudo dnf install -y docker
+#sudo systemctl enable --now docker
+sudo dnf install -y nginx
+sudo systemctl enable --now nginx
+docker run -d --restart=always --name backend-app -p 3000:3000 your-backend-image
+docker run -d --restart=always --name frontend-user -p 8080:80 your-frontend-user-image
+docker run -d --restart=always --name frontend-admin -p 8081:80 your-frontend-admin-image
+
+###
+Now use VM Nginx (not inside container) to reverse-proxy to correct containers.
+
+Edit your /etc/nginx/nginx.conf or better create /etc/nginx/conf.d/yourapp.conf:
+# Redirect all HTTP (port 80) traffic to HTTPS
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 80;
+    server_name admin.yourdomain.com;
+
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS for User Frontend
+server {
+    listen 443 ssl;
+    server_name yourdomain.com www.yourdomain.com;
+
+    # SSL Certificates
+    ssl_certificate /etc/ssl/certs/yourdomain.crt;
+    ssl_certificate_key /etc/ssl/private/yourdomain.key;
+    
+    # (Optional) If you have a CA Bundle
+    ssl_trusted_certificate /etc/ssl/certs/yourdomain-ca-bundle.crt;
+
+    # SSL Settings (simple)
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # Proxy to User Frontend running inside Docker on 8080
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Proxy API requests to backend running on 3000
+    location /api/ {
+        proxy_pass http://localhost:3000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+# HTTPS for Admin Frontend
+server {
+    listen 443 ssl;
+    server_name admin.yourdomain.com;
+
+    # SSL Certificates
+    ssl_certificate /etc/ssl/certs/yourdomain.crt;
+    ssl_certificate_key /etc/ssl/private/yourdomain.key;
+
+    # (Optional) If you have a CA Bundle
+    ssl_trusted_certificate /etc/ssl/certs/yourdomain-ca-bundle.crt;
+
+    # SSL Settings (simple)
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # Proxy to Admin Frontend running inside Docker on 8081
+    location / {
+        proxy_pass http://localhost:8081;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+####
+sudo nginx -t
+sudo systemctl reload nginx
+###allow ports in firewalld
+sudo systemctl start firewalld
+sudo systemctl enable firewalld
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+#sudo firewall-cmd --permanent --add-port=3000/tcp
+#sudo firewall-cmd --permanent --add-port=8080/tcp
+#sudo firewall-cmd --permanent --add-port=8081/tcp
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-all
+
+

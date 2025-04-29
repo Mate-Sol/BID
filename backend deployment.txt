@@ -1,0 +1,41 @@
+//backend deployment 
+
+sudo yum update -y
+sudo yum install -y yum-utils
+sudo yum install -y epel-release
+sudo yum install -y docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+//docker will not work on docker by default so remove podman and install docker 
+sudo yum remove -y podman-docker
+sudo yum install -y dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+sudo yum install -y docker-ce docker-ce-cli containerd.io
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker $USER
+
+
+//create backend.sh
+#!/bin/sh
+docker kill im-dscf-api
+docker rm im-dscf-api
+docker rmi matesol/im-dscf-api:testbranch
+docker run -d --name im-dscf-api -p 3000:3000 matesol/im-dscf-api:testbranch
+
+chmod +x /home/d1/backend.sh 
+sudo chown -R d1:d1 /home/d1/backend.sh
+//install and nofig nginx
+sudo yum install -y epel-release
+sudo yum install -y nginx
+sudo systemctl start nginx
+sudo systemctl enable nginx
+sudo systemctl reload nginx
+sudo nginx -t
+
+// if free ssl required
+//for cert renewal
+//echo "0 0 * * * root certbot renew --quiet" | sudo tee -a /etc/crontab
+
+35.222.244.144

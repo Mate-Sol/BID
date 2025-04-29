@@ -1,0 +1,19 @@
+yum update -y
+//for get root permissions to user d3...  sudo usermod -aG wheel d3...    then sudo reboot
+give file 
+
+
+//networking commands to allow ports 
+sudo firewall-cmd --add-service=https --permanent
+sudo firewall-cmd --add-service=http --permanent
+sudo firewall-cmd --permanent --add-port=3000/tcp
+
+
+sudo firewall-cmd --list-all
+sudo firewall-cmd --list-ports
+
+
+
+
+
+

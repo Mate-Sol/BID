@@ -1,0 +1,63 @@
+sudo vi /etc/yum.repos.d/mongodb-org-8.0.repo
+
+[mongodb-org-8.0]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/9/mongodb-org/8.0/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://pgp.mongodb.com/server-8.0.asc
+
+##install mongo
+sudo yum install -y mongodb-org
+
+##check mongo is working or not
+sudo systemctl enable mongod
+sudo systemctl start mongod
+sudo systemctl status mongod
+
+##change config
+sudo nano /etc/mongod.conf
+## in config add ip of other vm so mongo will be access through one one vm after testing
+bindIp: 0.0.0.0
+
+#commands to allow port through firewall
+sudo firewall-cmd --permanent --add-port=27017/tcp
+sudo firewall-cmd --reload
+
+#command to Create Admin User (if authentication is enabled)
+
+mongosh
+db.createUser({user: "admin",pwd: "admin123",roles: [ { role: "userAdminAnyDatabase", db: "admin" } ]})
+
+##Then enable authentication in /etc/mongod.conf:
+security:
+  authorization: enabled
+
+#restart mongo service again
+ sudo systemctl restart mongod
+
+###############if tls required
+its not working so iam skiping it for now
+openssl req -newkey rsa:4096 -new -x509 -days 3650 -nodes -out mongodb-cert.crt -keyout mongodb-cert.key
+cat mongodb-cert.key mongodb-cert.crt > mongodb.pem
+sudo mv mongodb.pem /etc/ssl/mongodb.pem
+sudo chmod 600 /etc/ssl/mongodb.pem
+sudo vi /etc/mongod.conf
+net:
+  port: 27017
+  bindIp: 0.0.0.0
+  tls:
+    mode: requireTLS
+    certificateKeyFile: /etc/ssl/mongodb.pem
+    CAFile: /etc/ssl/mongodb.pem
+    allowConnectionsWithoutCertificates: true 
+
+sudo systemctl restart mongod
+
+
+###dump and restore data form my atlas in vms db
+sudo dnf install https://fastdl.mongodb.org/tools/db/mongodb-database-tools-rhel93-x86_64-100.12.0.rpm
+
+mongodump --uri="mongodb+srv://<username>:<password>@<source-cluster-url>/DSCF" --out=./dump
+mongorestore --uri="mongodb://<new-mongo-db-uri>" --nsFrom="DSCF.*" --nsTo="<new-db-name>.*" ./dump
+

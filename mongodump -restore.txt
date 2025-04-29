@@ -1,0 +1,2 @@
+for dump date of mongo =mongodump --uri="mongodb+srv://stable:iTzK3a78P48SulAh@stable-db.jzpmx.mongodb.net/DSCF" --out=/tmp/atlas-dump
+for restore data= mongorestore --host 127.0.0.1 --port 27017 -u admin -p admin123 --authenticationDatabase admin /tmp/atlas-dump
