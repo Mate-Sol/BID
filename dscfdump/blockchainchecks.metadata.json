@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"b2c10b469b9849fc8463328ac7195290","collectionName":"blockchainchecks","type":"collection"}
